@@ -1,0 +1,20 @@
+import { Mailer } from './utils/mailer';
+
+const mailer = new Mailer({
+  host: process.env.SMTP_HOST,
+  port: parseInt(process.env.SMTP_PORT || ''),
+  secure: true,
+  auth: {
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
+  },
+  from: process.env.SMTP_FROM,
+});
+
+const bool = await mailer.sendMail({
+  to: 'kuldeep@onelint.com',
+  text: 'Hello World',
+  subject: 'Test Mail',
+});
+
+console.log('🚀 ~ file: index.ts ~ line 50 ~ bool', bool);
