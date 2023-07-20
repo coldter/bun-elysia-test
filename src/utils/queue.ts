@@ -1,5 +1,7 @@
 import PQueue from 'p-queue';
 
-const queue = new PQueue({ concurrency: 50 });
+const mailingQueue = new PQueue({ concurrency: 50 });
 
-export default queue;
+const analyticsQueue = new PQueue({ concurrency: 50 });
+
+export { mailingQueue, analyticsQueue };

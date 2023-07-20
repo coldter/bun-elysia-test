@@ -1,0 +1,66 @@
+{
+  "name": "ASDF Dev Container with Postgres and Redis via Docker Compose",
+  "image": "iloveitaly/asdf-devcontainer:0-ubuntu-22.04",
+  "appPort": [
+    "3000:3000"
+  ],
+  "runArgs": [
+    "--add-host=host.docker.internal:host-gateway"
+  ],
+  "postCreateCommand": "/asdf-post-create.sh && asdf plugin add bun && asdf global bun latest",
+  "remoteUser": "vscode",
+  "features": {
+    "homebrew": "latest",
+    "ghcr.io/devcontainers/features/sshd:1": {
+      "version": "latest"
+    },
+    "ghcr.io/devcontainers/features/docker-in-docker:1": {
+      "version": "latest",
+      "dockerDashComposeVersion": "v2"
+    },
+  },
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "[javascript]": {
+          "editor.defaultFormatter": "esbenp.prettier-vscode"
+        },
+        "[typescript]": {
+          "editor.defaultFormatter": "esbenp.prettier-vscode"
+        },
+        "[json]": {
+          "editor.defaultFormatter": "esbenp.prettier-vscode"
+        },
+        "editor.cursorBlinking": "expand",
+        "editor.cursorSmoothCaretAnimation": true,
+        "resmon.show.battery": false,
+        "resmon.show.cpufreq": false,
+        "remote.localPortHost": "allInterfaces",
+        "editor.fontLigatures": true,
+        "editor.fontFamily": "'Fira Code', 'JetBrainsMono Nerd Font Mono','Droid Sans Mono', 'monospace', monospace"
+      },
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "ms-azuretools.vscode-docker",
+        "yzhang.markdown-all-in-one",
+        "streetsidesoftware.code-spell-checker",
+        "Gruntfuggly.todo-tree",
+        "mutantdino.resourcemonitor",
+        "ChakrounAnas.turbo-console-log",
+        "yoavbls.pretty-ts-errors",
+        "EditorConfig.EditorConfig",
+        "donjayamanne.githistory",
+        "42Crunch.vscode-openapi",
+        "GraphQL.vscode-graphql",
+        "VisualStudioExptTeam.vscodeintellicode",
+        "VisualStudioExptTeam.intellicode-api-usage-examples",
+        "GitHub.copilot",
+        "GitHub.copilot-labs",
+        "cschleiden.vscode-github-actions",
+        "wmaurer.change-case",
+        "ms-vscode.vscode-typescript-next"
+      ]
+    }
+  }
+}

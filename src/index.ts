@@ -2,7 +2,11 @@ import cors from '@elysiajs/cors';
 import { Elysia, t } from 'elysia';
 import { swagger } from '@elysiajs/swagger';
 import { ServerResponseStatus, serverStandardModels, runCampaignModel } from './models';
-import { registerInitialCampaignEmailDeliveryStatus } from './service/campaign.service';
+import {
+  insertIntoEmailDeliveryQueue,
+  registerInitialCampaignEmailDeliveryStatus,
+  trackEmailOpen,
+} from './service/campaign.service';
 
 const app = new Elysia();
 
@@ -36,68 +40,92 @@ app
 /**
  * Application Routes
  */
-app.model({ ...serverStandardModels, runCampaignModel }).guard(
-  {
-    headers: t.Object({
-      ['x-api-key']: t.String({
-        description: 'API Key for authorization',
+app
+  .model({ ...serverStandardModels, runCampaignModel })
+  .get(
+    '/link/:campaignName/:email',
+    async ({ params }) => {
+      trackEmailOpen({
+        campaignName: params.campaignName,
+        email: params.email,
+      }).catch(console.error);
+      return Bun.file('public/image.png');
+    },
+    {
+      detail: {
+        tags: ['Static.Image'],
+        description: '1 pixel image for tracking email open',
+      },
+    },
+  )
+  .guard(
+    {
+      headers: t.Object({
+        ['x-api-key']: t.String({
+          description: 'API Key for authorization',
+        }),
       }),
-    }),
-    beforeHandle: ({ headers, set }) => {
-      if (headers['x-api-key'] !== (process.env.API_KEY || 'test')) {
-        set.status = 401;
+      beforeHandle: ({ headers, set }) => {
+        if (headers['x-api-key'] !== (process.env.API_KEY || 'test')) {
+          set.status = 401;
+          return {
+            status: ServerResponseStatus.ERROR,
+            details: 'Invalid API Key',
+          };
+        }
+      },
+      error: ({ error, set }) => {
+        set.status = 400;
         return {
           status: ServerResponseStatus.ERROR,
-          details: 'Invalid API Key',
+          details: error.message,
         };
-      }
+      },
     },
-    error: ({ error, set }) => {
-      set.status = 400;
-      return {
-        status: ServerResponseStatus.ERROR,
-        details: error.message,
-      };
-    },
-  },
-  (app) =>
-    app.group('/api', (app) =>
-      app.post(
-        '/campaign',
-        async ({ set, body }) => {
-          try {
-            // * entry in api table
-            await registerInitialCampaignEmailDeliveryStatus({
-              recipient: body.recipient,
-              campaignName: body.campaignName,
-            });
+    (app) =>
+      app.group('/api', (app) =>
+        app.post(
+          '/campaign',
+          async ({ set, body }) => {
+            try {
+              // * entry in api table
+              await registerInitialCampaignEmailDeliveryStatus({
+                recipient: body.recipient,
+                campaignName: body.campaignName,
+              });
 
-            return {
-              status: ServerResponseStatus.SUCCESS,
-              response: 'campaign created',
-            };
-          } catch (error) {
-            console.error('🚀 ~ file: index.ts ~ line 118 ~ app.get ~ error', error);
-            set.status = 500;
-            return {
-              status: ServerResponseStatus.ERROR,
-              details: 'api cannot fulfill your request at this time',
-            };
-          }
-        },
-        {
-          body: runCampaignModel,
-          response: {
-            200: serverStandardModels.standardResponse,
-            400: serverStandardModels.standardErrorResponse,
+              insertIntoEmailDeliveryQueue({
+                campaignName: body.campaignName,
+                recipient: body.recipient,
+                template: body.template,
+              }).catch(console.error);
+
+              return {
+                status: ServerResponseStatus.SUCCESS,
+                response: 'campaign created',
+              };
+            } catch (error) {
+              console.error('🚀 ~ file: index.ts ~ line 118 ~ app.get ~ error', error);
+              set.status = 500;
+              return {
+                status: ServerResponseStatus.ERROR,
+                details: 'api cannot fulfill your request at this time',
+              };
+            }
           },
-          detail: {
-            tags: ['Api.Campaign'],
+          {
+            body: runCampaignModel,
+            response: {
+              200: serverStandardModels.standardResponse,
+              400: serverStandardModels.standardErrorResponse,
+            },
+            detail: {
+              tags: ['Api.Campaign'],
+            },
           },
-        },
+        ),
       ),
-    ),
-);
+  );
 
 /**
  * Error Handling
@@ -113,6 +141,6 @@ app.onError((error) => {
 /**
  * start server
  */
-app.listen(process.env.PORT || 3000);
+app.listen(process.env.API_PORT || 3000);
 
 console.log(`🦊 Elysia is running at ${app.server?.hostname}:${app.server?.port}`);

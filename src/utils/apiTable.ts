@@ -5,6 +5,7 @@ const apiTable = new APITable({
   fieldKey: 'name',
 });
 
-const emailDeliveryDS = apiTable.datasheet('dst8MmSqoNfEUcW5se');
+const emailDeliveryDS = apiTable.datasheet(process.env.EMAIL_DELIVERY_STATUS_DATASET || '');
+const generalEmailTrackingDS = apiTable.datasheet(process.env.GENERAL_EMAIL_TRACKING_DATESET || '');
 
-export { emailDeliveryDS };
+export { emailDeliveryDS, generalEmailTrackingDS };
